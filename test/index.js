@@ -21,6 +21,7 @@ describe('dateMath', function () {
   // Test each of these intervals when testing relative time
   const spans = ['s', 'm', 'h', 'd', 'w', 'M', 'y', 'ms'];
   const anchor =  '2014-01-01T06:06:06.666Z';
+  const anchoredDate = new Date(Date.parse(anchor));
   const unix = moment(anchor).valueOf();
   const format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
   let clock;
@@ -47,6 +48,20 @@ describe('dateMath', function () {
       expect(dateMath.parse('now-0')).to.be(undefined);
       expect(dateMath.parse('now-00')).to.be(undefined);
       expect(dateMath.parse('now-000')).to.be(undefined);
+    });
+
+    describe('forceNow', function () {
+      it('should throw an Error if passed a string', function () {
+        expect(() => dateMath.parse('now', { forceNow: '2000-01-01T00:00:00.000Z' })).to.throwError();
+      });
+
+      it('should throw an Error if passed a moment', function () {
+        expect(() => dateMath.parse('now', { forceNow: moment() })).to.throwError();
+      });
+
+      it('should throw an Error if passed an invalid date', function () {
+        expect(() => dateMath.parse('now', { forceNow: new Date('foobar') })).to.throwError();
+      });
     });
 
   });
@@ -81,8 +96,12 @@ describe('dateMath', function () {
       expect(dateMath.parse(string).format(format)).to.eql(mmnt.format(format));
     });
 
-    it('should return the current time if passed now', function () {
+    it(`should return the current time when parsing now`, function () {
       expect(dateMath.parse('now').format(format)).to.eql(now.format(format));
+    });
+
+    it(`should use the forceNow parameter when parsing now`, function () {
+      expect(dateMath.parse('now', { forceNow: anchoredDate }).valueOf()).to.eql(unix);
     });
   });
 
@@ -111,6 +130,10 @@ describe('dateMath', function () {
 
         it('should return ' + len + span + ' before ' + anchor, function () {
           expect(dateMath.parse(thenEx).format(format)).to.eql(anchored.subtract(len, span).format(format));
+        });
+
+        it('should return ' + len + span + ' before forceNow', function () {
+          expect(dateMath.parse(nowEx, { forceNow: anchoredDate }).valueOf()).to.eql(anchored.subtract(len, span).valueOf());
         });
       });
     });
@@ -142,16 +165,22 @@ describe('dateMath', function () {
         it('should return ' + len + span + ' after ' + anchor, function () {
           expect(dateMath.parse(thenEx).format(format)).to.eql(anchored.add(len, span).format(format));
         });
+
+        it('should return ' + len + span + ' after forceNow', function () {
+          expect(dateMath.parse(nowEx, { forceNow: anchoredDate }).valueOf()).to.eql(anchored.add(len, span).valueOf());
+        });
       });
     });
   });
 
   describe('rounding', function () {
     let now;
+    let anchored;
 
     beforeEach(function () {
       clock = sinon.useFakeTimers(unix);
       now = moment();
+      anchored = moment(anchor);
     });
 
     afterEach(function () {
@@ -163,18 +192,28 @@ describe('dateMath', function () {
         expect(dateMath.parse('now/' + span).format(format)).to.eql(now.startOf(span).format(format));
       });
 
+      it(`should round now to the beginning of forceNow's ` + span, function () {
+        expect(dateMath.parse('now/' + span, { forceNow: anchoredDate }).valueOf()).to.eql(anchored.startOf(span).valueOf());
+      });
+
       it('should round now to the end of the ' + span, function () {
-        expect(dateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
+        expect(dateMath.parse('now/' + span, { roundUp: true }).format(format)).to.eql(now.endOf(span).format(format));
+      });
+
+      it(`should round now to the end of forceNow's ` + span, function () {
+        expect(dateMath.parse('now/' + span, { roundUp: true, forceNow: anchoredDate }).valueOf()).to.eql(anchored.endOf(span).valueOf());
       });
     });
   });
 
   describe('math and rounding', function () {
     let now;
+    let anchored;
 
     beforeEach(function () {
       clock = sinon.useFakeTimers(unix);
       now = moment();
+      anchored = moment(anchor);
     });
 
     it('should round to the nearest second with 0 value', function () {
@@ -208,7 +247,7 @@ describe('dateMath', function () {
       m.defineLocale('x-test', {
         week: { dow: 2 }
       });
-      const val = dateMath.parse('now-1w/w', false, m);
+      const val = dateMath.parse('now-1w/w', { momentInstance: m });
       expect(val.isoWeekday()).to.eql(2);
     });
 
@@ -218,10 +257,15 @@ describe('dateMath', function () {
       m.defineLocale('x-test', {
         week: { dow: 3 }
       });
-      const val = dateMath.parse('now-1w/w', true, m);
+      const val = dateMath.parse('now-1w/w', { roundUp: true, momentInstance: m });
       // The end of the range (rounding up) should be the last day of the week (so one day before)
       // our start of the week, that's why 3 - 1
       expect(val.isoWeekday()).to.eql(3 - 1);
+    });
+
+    it('should round relative to forceNow', function () {
+      const val = dateMath.parse('now-0s/s', { forceNow: anchoredDate }).valueOf();
+      expect(val).to.eql(anchored.startOf('s').valueOf());
     });
   });
 
@@ -237,7 +281,7 @@ describe('dateMath', function () {
       const m = momentClone();
       const momentSpy = sinon.spy(moment, 'isMoment');
       const cloneSpy = sinon.spy(m, 'isMoment');
-      dateMath.parse('now', false, m);
+      dateMath.parse('now', { momentInstance: m });
       expect(momentSpy.called).to.be(false);
       expect(cloneSpy.called).to.be(true);
       momentSpy.restore();
@@ -249,12 +293,12 @@ describe('dateMath', function () {
       const m2 = momentClone();
       const m1Spy = sinon.spy(m1, 'isMoment');
       const m2Spy = sinon.spy(m2, 'isMoment');
-      dateMath.parse('now', false, m1);
+      dateMath.parse('now', { momentInstance: m1 });
       expect(m1Spy.called).to.be(true);
       expect(m2Spy.called).to.be(false);
       m1Spy.reset();
       m2Spy.reset();
-      dateMath.parse('now', false, m2);
+      dateMath.parse('now', { momentInstance: m2 });
       expect(m1Spy.called).to.be(false);
       expect(m2Spy.called).to.be(true);
       m1Spy.restore();
@@ -265,7 +309,7 @@ describe('dateMath', function () {
       const m = momentClone();
       const momentSpy = sinon.spy(moment, 'isMoment');
       const cloneSpy = sinon.spy(m, 'isMoment');
-      dateMath.parse('now', false, m);
+      dateMath.parse('now', { momentInstance: m });
       expect(momentSpy.called).to.be(false);
       expect(cloneSpy.called).to.be(true);
       momentSpy.reset();
