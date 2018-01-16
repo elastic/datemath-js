@@ -1,8 +1,8 @@
 import moment from 'moment';
 
 const units = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms'];
-const unitsAsc = units;
-const unitsDesc = [...unitsAsc].reverse();
+const unitsDesc = units;
+const unitsAsc = [...unitsDesc].reverse();
 
 const isDate = d => toString.call(d) === '[object Date]';
 
