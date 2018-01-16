@@ -7,6 +7,7 @@
     "test": "test"
   },
   "scripts": {
+    "lint": "eslint \"src/*.js\" \"test/*.js\"",
     "test": "npm run build && mocha --require babel-core/register",
     "build": "babel src --out-dir lib",
     "prepublishOnly": "npm run test"
@@ -25,8 +26,12 @@
     "babel-core": "^6.26.0",
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-env": "^1.6.1",
+    "eslint": "^4.7.2",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.4.0",
     "expect.js": "^0.3.1",
     "mocha": "^4.1.0",
+    "prettier": "^1.9.2",
     "sinon": "^4.1.4"
   },
   "dependencies": {
