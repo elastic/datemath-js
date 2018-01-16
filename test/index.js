@@ -328,7 +328,7 @@ describe('dateMath', function () {
     });
 
     it('should have units ascending for unitsAsc', function () {
-      expect(dateMath.unitsAsc).to.eql(["ms", "s", "m", "h", "d", "w", "M", "y"]);
+      expect(dateMath.unitsAsc).to.eql(['ms', 's', 'm', 'h', 'd', 'w', 'M', 'y']);
     });
   });
 
