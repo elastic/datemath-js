@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint \"src/*.js\" \"test/*.js\"",
-    "test": "npm run build && mocha --require babel-core/register",
+    "test": "npm run lint && npm run build && mocha --require babel-core/register",
     "build": "babel src --out-dir lib",
     "prepublishOnly": "npm run test"
   },
