@@ -89,13 +89,14 @@ function parseDateMath(mathString, time, roundUp) {
     unit = mathString.charAt(i++);
 
     // append additional characters in the unit
-    for(let j=i; j < len; j++) {
+    for (let j = i; j < len; j++) {
       let unitChar = mathString.charAt(i);
-      if ((/[a-z]/i).test(unitChar)) {
+      if (/[a-z]/i.test(unitChar)) {
         unit += unitChar;
         i++;
+      } else {
+        break;
       }
-      else break;
     }
 
     if (units.indexOf(unit) === -1) {
@@ -119,5 +120,5 @@ export default {
   parse: parse,
   units: Object.freeze(units),
   unitsAsc: Object.freeze(unitsAsc),
-  unitsDesc: Object.freeze(unitsDesc)
+  unitsDesc: Object.freeze(unitsDesc),
 };
