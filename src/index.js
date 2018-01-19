@@ -4,7 +4,7 @@ const units = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'ms'];
 const unitsDesc = units;
 const unitsAsc = [...unitsDesc].reverse();
 
-const isDate = d => toString.call(d) === '[object Date]';
+const isDate = d => Object.prototype.toString.call(d) === '[object Date]';
 
 /*
  * This is a simplified version of elasticsearch's date parser.
